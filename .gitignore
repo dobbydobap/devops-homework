@@ -1,0 +1,6 @@
+node_modules/
+dist/
+npm-debug.log*
+*.class
+.DS_Store
+Thumbs.db
