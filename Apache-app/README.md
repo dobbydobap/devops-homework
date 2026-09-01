@@ -19,5 +19,3 @@ $ curl http://localhost:8082
   </body>
 </html>
 ```
-
-![apache app](../screenshots/apache-app.png)

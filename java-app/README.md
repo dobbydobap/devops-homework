@@ -18,5 +18,3 @@ the multi-stage build task.
 $ curl http://localhost:8081
 <h1>Hello World from Java</h1>
 ```
-
-![java app](../screenshots/java-app.png)

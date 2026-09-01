@@ -98,8 +98,6 @@ The `run.sh` and `script` lines in the process list are just how I fed the input
 capturing the transcript - running `./sysinfo.sh` directly and typing the name gives the same
 result.
 
-![sysinfo script output](screenshots/sysinfo.png)
-
 ## The file it produced
 
 ```

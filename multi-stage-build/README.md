@@ -55,8 +55,6 @@ $ docker logs hw-multistage
 Server running on port 3000
 ```
 
-![application running on port 8080](screenshots/app-8080.png)
-
 ### docker ps showing the container on port 8080
 
 ```
@@ -64,8 +62,6 @@ $ docker ps
 NAMES           IMAGE            STATUS         PORTS
 hw-multistage   multistage-app   Up 5 seconds   0.0.0.0:8080->3000/tcp, [::]:8080->3000/tcp
 ```
-
-![docker ps on port 8080](screenshots/docker-ps.png)
 
 ---
 
@@ -130,8 +126,6 @@ $ curl http://localhost:5000
 $ curl http://localhost:8081
 <h1>Hello World from Java</h1>
 ```
-
-![three applications](screenshots/three-apps.png)
 
 Three more (Apache, React, Nginx) are in the repository as well - see the
 [root README](../README.md).

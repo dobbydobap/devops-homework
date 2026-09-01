@@ -12,5 +12,3 @@ docker run -d --name hw-python -p 5000:5000 python-app
 $ curl http://localhost:5000
 <h1>Hello World from Python</h1>
 ```
-
-![python app](../screenshots/python-app.png)

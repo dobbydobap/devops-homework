@@ -93,8 +93,6 @@ fc781a4 update notes using commit -a
 I use `-a` for quick edits to files that already exist, and plain `-m` after `git add` when I
 only want part of my changes in the commit.
 
-![git commit -a](screenshots/commit-a.png)
-
 ---
 
 ## Task 2: Cherry-pick
@@ -205,8 +203,6 @@ Useful variations:
 My demo picked commits that touched different files, so it applied cleanly. If the picked commit
 changes lines that look different on the target branch, git stops with a conflict and you resolve
 it like a merge, then run `git cherry-pick --continue`.
-
-![cherry-pick](screenshots/cherry-pick.png)
 
 ---
 

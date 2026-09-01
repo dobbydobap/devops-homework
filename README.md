@@ -91,8 +91,6 @@ $ curl -s http://localhost:8083/assets/index-DnZR9tUp.js | grep -o "Hello World 
 Hello World from React
 ```
 
-![all six apps in the browser](screenshots/all-apps.png)
-
 Cleanup:
 
 ```bash

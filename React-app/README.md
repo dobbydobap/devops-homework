@@ -41,5 +41,3 @@ The heading is inside the JS bundle, and shows up in the browser:
 $ curl -s http://localhost:8083/assets/index-DnZR9tUp.js | grep -o "Hello World from React"
 Hello World from React
 ```
-
-![react app](../screenshots/react-app.png)

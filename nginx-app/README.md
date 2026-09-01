@@ -19,5 +19,3 @@ $ curl http://localhost:8084
   </body>
 </html>
 ```
-
-![nginx app](../screenshots/nginx-app.png)

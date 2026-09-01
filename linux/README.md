@@ -71,8 +71,6 @@ cat: softlink.txt: No such file or directory
 The hard link still works and the data is intact - the link count just dropped from 2 to 1.
 The soft link is now dangling, because the path it stored no longer exists.
 
-![soft and hard links](screenshots/links.png)
-
 ### Interview answer
 
 | | Hard link | Soft link |
@@ -154,8 +152,6 @@ Run normally, `adduser testuser2` prompts for the password and the full name.
 sets a proper login shell and prompts for a password in one step. `useradd` is the portable one
 that exists on every distro, and it is what you use in scripts where you want to control each
 option yourself - note it needs `-m` to create the home directory at all.
-
-![adduser vs useradd](screenshots/users.png)
 
 ---
 
@@ -248,8 +244,6 @@ Aug 31 15:58:15 dbfc252bf234 unknown: WSL (108) ERROR: CheckConnection: getaddri
 | `journalctl -p err` | filter by priority |
 | `journalctl --disk-usage` | how much space the journal uses |
 | `journalctl --vacuum-time=7d` | delete journal data older than 7 days |
-
-![journalctl](screenshots/journalctl.png)
 
 ---
 
@@ -346,5 +340,3 @@ Quick reference of what each one is for:
 One thing that clicked while doing this: `chmod 750` is three digits for three sets of
 permissions - owner 7 (rwx), group 5 (r-x), others 0 (---), which `ls -l` then shows back as
 `-rwxr-x---`.
-
-![cheat sheet practice](screenshots/cheatsheet.png)

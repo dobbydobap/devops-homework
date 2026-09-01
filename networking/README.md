@@ -315,5 +315,3 @@ itself and the broadcast address. So a /24 has 2^8 - 2 = 254 usable addresses, a
 
 Worked from the session: `197.23.45.10` with mask `255.255.255.0` is class C, so 24 network bits
 and 8 host bits, the network is 197.23.45.0 and the broadcast is 197.23.45.255.
-
-![networking commands](screenshots/networking.png)

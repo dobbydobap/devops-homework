@@ -126,8 +126,6 @@ name `database` will not resolve. Docker's built in DNS only resolves container 
 shared network**, so from the frontend the database simply does not exist. This is how you keep a
 database off the public facing tier: don't put them on the same network.
 
-![three tier networking](screenshots/three-tier.png)
-
 ### Cleanup
 
 ```bash
@@ -207,8 +205,6 @@ you need to turn on "Enable host networking" under Settings > Resources > Networ
 from Windows. I left that setting alone because it needs a Docker restart and I had other
 containers running.
 
-![apache on host network](screenshots/host-network.png)
-
 ### Cleanup
 
 ```bash
@@ -263,8 +259,6 @@ $ curl http://localhost:8085
 </html>
 ```
 
-![bind mount before edit](screenshots/bind-mount-before.png)
-
 ### Editing the file without restarting
 
 The container started at a fixed time, and I did not touch it after that:
@@ -305,8 +299,6 @@ bind-nginx   Up 18 seconds
 Same `StartedAt` as before the edit and `restarts=0`. Nothing was copied into the image at build
 time - the container is reading my actual directory, so whatever the file says right now is what
 Nginx serves. That is exactly why bind mounts are handy in development.
-
-![bind mount after edit](screenshots/bind-mount-after.png)
 
 (The file in this repo is back to plain "Hello students" so the demo starts from the beginning.)
 
