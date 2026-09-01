@@ -1,7 +1,7 @@
 # Docker Multi-Stage Build
 
 **Name:** Varshitha Kolupuri
-**Enrollment number:** <ENROLLMENT NUMBER>
+**Enrollment number:** 10271
 
 Source files taken from the course repository:
 `devops-heros/session6-7-docker/multi-stage-dockerfile`
