@@ -1,6 +1,6 @@
 # DevOps Homework
 
-My submissions for the DevOps sessions (Linux, shell scripting, networking, Git, Docker).
+My submissions for the DevOps sessions (Linux, shell scripting, networking, Git, Docker, Kubernetes).
 Every command output in these files was copied from an actual run on my machine.
 
 ## Setup I used
@@ -22,6 +22,7 @@ system, I ran them inside containers rather than faking anything:
 | [git-github/](git-github/) | `git commit -a -m` and cherry-pick |
 | [multi-stage-build/](multi-stage-build/) | Multi-stage Dockerfile running on port 8080 |
 | [docker-networking/](docker-networking/) | Networks, host network, bind mount, overlay notes |
+| [kubernetes-services/](kubernetes-services/) | Session 11 - ClusterIP service, endpoints, DNS, load balancing |
 
 Docker "Hello World" apps, one folder each:
 
