@@ -22,7 +22,10 @@ system, I ran them inside containers rather than faking anything:
 | [git-github/](git-github/) | `git commit -a -m` and cherry-pick |
 | [multi-stage-build/](multi-stage-build/) | Multi-stage Dockerfile running on port 8080 |
 | [docker-networking/](docker-networking/) | Networks, host network, bind mount, overlay notes |
-| [kubernetes-services/](kubernetes-services/) | Session 11 - ClusterIP service, endpoints, DNS, load balancing |
+| [kubernetes-basics/](kubernetes-basics/) | Session 9 - cluster architecture, control plane components, kubectl basics |
+| [kubernetes-core-objects/](kubernetes-core-objects/) | Session 10 - pods, replicasets, deployments, pod lifecycle, rollout strategies |
+| [kubernetes-services/](kubernetes-services/) | Session 11 - ClusterIP, NodePort, LoadBalancer, ExternalName, headless |
+| [kubernetes-config-ingress/](kubernetes-config-ingress/) | Session 12 - ConfigMaps, Secrets, Ingress routing |
 
 Docker "Hello World" apps, one folder each:
 
