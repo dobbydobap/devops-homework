@@ -1,201 +1,197 @@
-# Session 9 — Kubernetes Basics and Cluster Architecture
+# Session 9 — Kubernetes Fundamentals
 
-The session 9 folder in the course repo is a set of resource links rather than a lab, so I worked
-through the Kubernetes Basics tutorial and the architecture docs it points at, and captured what
-the cluster actually looks like from the inside.
+What the session asked for:
 
-Every output below came from a real run against my cluster.
+1. Install and configure Minikube
+2. Verify the cluster status
+3. Explore the Kubernetes architecture
+4. Learn the basic objects and commands
+5. Do the Kubernetes Basics tutorial hands-on
 
-## Setup: kind instead of minikube
-
-The resources suggest minikube. minikube is not installed on my machine and the `kind` binary is
-blocked by an Application Control policy here, so I used the kind cluster I already created for
-session 11:
-
-```
-$ kubectl config current-context
-kind-devops-heros
-
-$ kubectl get nodes -o wide
-NAME                         STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION                              CONTAINER-RUNTIME
-devops-heros-control-plane   Ready    control-plane   5d    v1.36.1   172.24.0.2    <none>        Debian GNU/Linux 13 (trixie)   6.18.33.1-microsoft-standard-WSL2 (amd64)   containerd://2.3.1
-```
-
-This is a single node cluster, so the one node is both the control plane and the worker. On a real
-cluster those are separate machines. Note `kind` has removed the usual control-plane taint, which
-is why ordinary pods are allowed to schedule here at all:
-
-```
-Taints:             <none>
-```
-
-One thing to flag about my setup:
-
-```
-$ kubectl version
-Client Version: v1.34.1
-Kustomize Version: v5.7.1
-Server Version: v1.36.1
-Warning: version difference between client (1.34) and server (1.36) exceeds the supported minor version skew of +/-1
-```
-
-My `kubectl` is two minor versions behind the cluster. Kubernetes only supports a skew of one, so
-this warning is legitimate. Everything in these labs worked, but it is the kind of thing that
-causes odd failures on newer API fields, and on a real cluster I would upgrade the client.
+All screenshots below are real captures of my terminal, taken while I ran each step.
 
 ---
 
-## The control plane
+## 1. Installing and configuring Minikube
 
-`cluster-info` shows where the API server lives:
+I'm on Windows 11 with Docker Desktop, so I installed Minikube with winget and used the Docker
+driver, which runs the whole node as a container instead of needing a VM:
 
-```
-$ kubectl cluster-info
-Kubernetes control plane is running at https://127.0.0.1:64162
-CoreDNS is running at https://127.0.0.1:64162/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
-```
-
-The port is a random localhost port because kind publishes the API server out of its node
-container onto my machine.
-
-Every control plane component runs as a pod in `kube-system`:
-
-```
-$ kubectl get pods -n kube-system
-NAME                                                 READY   STATUS    RESTARTS        AGE
-coredns-589f44dc88-r845z                             1/1     Running   6 (3m46s ago)   5d
-coredns-589f44dc88-z4zrl                             1/1     Running   6 (3m45s ago)   5d
-etcd-devops-heros-control-plane                      1/1     Running   0               2m22s
-kindnet-m864c                                        1/1     Running   4 (3m46s ago)   3d6h
-kube-apiserver-devops-heros-control-plane            1/1     Running   0               2m21s
-kube-controller-manager-devops-heros-control-plane   1/1     Running   6 (3m46s ago)   5d
-kube-proxy-pqhmv                                     1/1     Running   5 (3m46s ago)   5d
-kube-scheduler-devops-heros-control-plane            1/1     Running   6 (3m45s ago)   5d
+```powershell
+winget install --id Kubernetes.minikube -e
+minikube start --driver=docker --cpus=4 --memory=5500
 ```
 
-What each one is doing:
+I gave it 4 CPUs and about 5.5 GB because the later sessions run Prometheus, Grafana and ArgoCD on
+this same cluster, and the defaults are too small for that.
 
-| Component | Job |
+![minikube install and start](screenshots/01-minikube-install.png)
+
+The start output already tells you a lot: it runs Kubernetes v1.37.0 on containerd, and it
+enabled the addons I need later — `metrics-server` (for HPA and `kubectl top`) and `ingress`
+(the nginx Ingress controller).
+
+## 2. Verifying the cluster
+
+![cluster status](screenshots/02-cluster-status.png)
+
+- `minikube status` — host, kubelet and apiserver are all `Running`, and kubeconfig is
+  `Configured`, which means `kubectl` is pointed at this cluster.
+- `kubectl cluster-info` — the API server is on a localhost port because Minikube publishes it
+  out of the node container.
+- `kubectl get nodes -o wide` — one node, `Ready`, role `control-plane`, Debian 12 inside the
+  container, containerd as the runtime.
+
+A note on my setup: my `kubectl` is v1.34 and the cluster is v1.37. Kubernetes only officially
+supports one minor version of skew, so `kubectl version` prints a warning. Everything in these
+labs worked, but if I hit odd errors on newer API fields, that would be the first thing to fix.
+
+## 3. Kubernetes architecture
+
+Everything in the `kube-system` namespace in the screenshot above is a piece of the architecture:
+
+| Component | What it does |
 |---|---|
-| `kube-apiserver` | the front door. Every `kubectl` command, every controller, every kubelet talks to this and nothing talks to etcd directly |
-| `etcd` | the key-value store holding all cluster state. If you lose etcd you lose the cluster |
-| `kube-scheduler` | watches for pods with no node assigned and picks a node based on resources, affinity and taints |
-| `kube-controller-manager` | runs the control loops — it is what notices a ReplicaSet has 2 of 3 pods and creates the third |
-| `kube-proxy` | programs iptables/IPVS on each node so Service IPs route to the right pod |
-| `coredns` | cluster DNS. This is what lets a pod reach `backend` by name instead of by IP |
-| `kindnet` | kind's CNI plugin, handling the pod network. On a real cluster this slot would be Calico, Flannel or similar |
+| `kube-apiserver` | the front door. `kubectl`, the kubelet and every controller talk to it; nothing else talks to etcd |
+| `etcd` | key-value store with the whole cluster state. Lose etcd and you lose the cluster |
+| `kube-scheduler` | picks a node for every new pod, based on resources, affinity and taints |
+| `kube-controller-manager` | runs the control loops, e.g. "this ReplicaSet wants 3 pods but has 2, make one" |
+| `kube-proxy` | programs iptables on each node so Service IPs route to the right pods |
+| `coredns` | cluster DNS — the reason a pod can reach `backend` by name |
+| `kindnet` | the CNI plugin giving pods their network. Real clusters often use Calico or Cilium here |
+| `metrics-server` | collects CPU/memory from kubelets. Needed for `kubectl top` and HPA |
+| `storage-provisioner` | creates volumes automatically when a PVC asks for one |
 
-The restart counts are from my machine sleeping and Docker Desktop being restarted, not from
-anything being broken.
-
-The default namespaces:
+On the worker side, each node runs the **kubelet** (starts and watches containers), the
+**container runtime** (containerd here) and **kube-proxy**.
 
 ```
-$ kubectl get namespaces
-NAME                 STATUS   AGE
-default              Active   5d
-kube-node-lease      Active   5d
-kube-public          Active   5d
-kube-system          Active   5d
-local-path-storage   Active   5d
+                 kubectl
+                    |
+              kube-apiserver  <---->  etcd
+              /     |      \
+     scheduler  controller   (kubelets on each node report in)
+                 manager
+                    |
+   node:  kubelet -> containerd -> pods      kube-proxy -> iptables
 ```
 
-`local-path-storage` is kind's built-in storage provisioner. It matters later — it is what lets the
-StatefulSet in session 10 actually bind a volume instead of hanging on a Pending PVC.
+In Minikube there is only one node, so the control plane and the worker are the same machine.
+On a real cluster they are separate machines, and you would have several workers.
+
+The idea that made this click for me: `kubectl` does not start containers. It writes the desired
+state to the API server, which stores it in etcd. The scheduler then notices an unscheduled pod
+and assigns a node, and that node's kubelet notices a pod assigned to it and starts it. Each piece
+just watches the API server and reacts.
+
+## 4 and 5. The Kubernetes Basics tutorial
+
+I followed the official tutorial modules in order.
+
+### Deploy an app
+
+```powershell
+kubectl create deployment kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1
+```
+
+![deploy the app](screenshots/03-deploy-app.png)
+
+One command created a Deployment, which created a ReplicaSet, which created a pod. The pod got
+an IP from the pod network and was scheduled onto the `minikube` node.
+
+### Explore the app
+
+![explore the app](screenshots/04-explore-app.png)
+
+- `describe pod` — the Events at the bottom show the whole startup: scheduled, image pulled,
+  container created, started. This is the first place I would look if a pod were broken.
+- `logs` — the app's own output, which includes the pod name it is running on.
+- `exec ... env` — the pod's hostname is its pod name, and Kubernetes injects `KUBERNETES_PORT`
+  so apps can find the API server.
+- `exec ... curl localhost:8080` — I can reach the app from inside its own container, which proves
+  the app is serving before any Service is involved.
+
+### Scale the app
+
+```powershell
+kubectl scale deployments/kubernetes-bootcamp --replicas=4
+```
+
+![scale the app](screenshots/05-scale-app.png)
+
+Four pods, each with its own IP. The Deployment's desired replicas changed and the ReplicaSet
+created three more.
+
+### Expose the app
+
+```powershell
+kubectl expose deployment/kubernetes-bootcamp --type=NodePort --port 8080
+```
+
+![expose the app](screenshots/06-expose-app.png)
+
+The Service got a ClusterIP and a NodePort (`31335`), and its Endpoints list all four pod IPs.
+
+The tutorial uses `curl $(minikube ip):$NODE_PORT`. That does not work on Windows with the Docker
+driver, because the node's IP (`192.168.49.2`) is inside Docker's network and not reachable from
+Windows. `minikube service --url` is the documented workaround: it opens a tunnel and prints a
+`127.0.0.1` URL. That command has to keep running to hold the tunnel open, so I ran it as a
+background job and then curled the URL it printed.
+
+### Update the app (rolling update)
+
+```powershell
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=docker.io/jocatalin/kubernetes-bootcamp:v2
+```
+
+![rolling update](screenshots/07-rolling-update.png)
+
+`rollout status` shows it replacing pods a few at a time ("2 out of 4 new replicas have been
+updated..."), so some pods were always serving. The old pods show as `Terminating` with the old
+ReplicaSet hash, and the new ones carry a new hash. Afterwards every pod runs the `v2` image.
+
+### Bad update and rollback
+
+The last module deliberately deploys a tag that doesn't exist:
+
+![bad image and rollback](screenshots/08-bad-image-rollback.png)
+
+Two new pods went into `ImagePullBackOff` because `kubernetes-bootcamp:v10` doesn't exist. The
+important bit is that the rollout **stopped there**: the four v2 pods kept running, so the app
+never went down. A rolling update never removes the last working pods while the new ones can't
+become ready.
+
+`kubectl rollout undo` went back to the previous revision. The broken pods were removed, and all
+pods are back on `v2`.
 
 ---
-
-## The basic kubectl workflow
-
-Creating a pod imperatively:
-
-```
-$ kubectl run hello-k8s --image=nginx:alpine --restart=Never
-pod/hello-k8s created
-
-$ kubectl get pod hello-k8s -o wide
-NAME        READY   STATUS    RESTARTS   AGE   IP           NODE                         NOMINATED NODE   READINESS GATES
-hello-k8s   1/1     Running   0          21s   10.244.0.7   devops-heros-control-plane   <none>           <none>
-```
-
-The pod got IP `10.244.0.7` from the cluster pod CIDR, and the scheduler placed it on the only
-node available.
-
-`describe` is the command I would reach for first when something is wrong, because the Events at
-the bottom are a narrative of what happened:
-
-```
-$ kubectl describe pod hello-k8s | tail -12
-QoS Class:                   BestEffort
-Node-Selectors:              <none>
-Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
-                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
-Events:
-  Type    Reason     Age   From               Message
-  ----    ------     ----  ----               -------
-  Normal  Scheduled  20s   default-scheduler  Successfully assigned default/hello-k8s to devops-heros-control-plane
-  Normal  Pulling    20s   kubelet            Pulling image "nginx:alpine"
-  Normal  Pulled     1s    kubelet            Successfully pulled image "nginx:alpine" in 19.204s (19.204s including waiting). Image size: 26335703 bytes.
-  Normal  Created    1s    kubelet            Container created
-  Normal  Started    1s    kubelet            Container started
-```
-
-You can read the whole lifecycle there: the scheduler assigned it, then the kubelet pulled the
-image (19 seconds), created the container and started it. `QoS Class: BestEffort` is because I set
-no resource requests or limits.
-
-Logs and exec:
-
-```
-$ kubectl logs hello-k8s | tail -5
-/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
-/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
-10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
-
-$ kubectl exec hello-k8s -- nginx -v
-nginx version: nginx/1.31.6
-
-$ kubectl exec hello-k8s -- hostname
-hello-k8s
-```
-
-The pod's hostname is the pod name, which is worth remembering — it is how you tell replicas apart
-when you are load balancing across them.
-
-```
-$ kubectl delete pod hello-k8s
-pod "hello-k8s" deleted from default namespace
-```
-
----
-
-## What I took away
-
-The part that made the architecture click was that the control plane is just pods. `etcd`,
-the scheduler and the controller manager are containers on the node like anything else, and the
-API server is the only thing any of them speak to. Nothing reaches into etcd on its own.
-
-The other thing is how much of Kubernetes is a control loop rather than a command. `kubectl run`
-does not create a container — it records the desired state in etcd through the API server, and
-then the scheduler and kubelet independently notice and act on it. That is why a deleted pod under
-a Deployment comes straight back: nothing "restarted" it, the controller simply saw that observed
-state no longer matched desired state.
 
 ## Commands used
 
 ```bash
-kubectl config current-context
+# install / cluster
+winget install --id Kubernetes.minikube -e
+minikube start --driver=docker --cpus=4 --memory=5500
+minikube status
+minikube addons enable metrics-server
+minikube addons enable ingress
 kubectl cluster-info
 kubectl get nodes -o wide
-kubectl version
 kubectl get pods -n kube-system
-kubectl get namespaces
-kubectl describe node <node>
-kubectl run <name> --image=<image> --restart=Never
-kubectl get pod <name> -o wide
-kubectl describe pod <name>
-kubectl logs <name>
-kubectl exec <name> -- <command>
-kubectl delete pod <name>
+
+# tutorial
+kubectl create deployment kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1
+kubectl get deployments
+kubectl get pods -o wide
+kubectl describe pod <pod>
+kubectl logs <pod>
+kubectl exec <pod> -- env
+kubectl exec <pod> -- curl -s localhost:8080
+kubectl scale deployments/kubernetes-bootcamp --replicas=4
+kubectl expose deployment/kubernetes-bootcamp --type=NodePort --port 8080
+kubectl get services
+minikube service kubernetes-bootcamp --url
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=docker.io/jocatalin/kubernetes-bootcamp:v2
+kubectl rollout status deployments/kubernetes-bootcamp
+kubectl rollout undo deployments/kubernetes-bootcamp
 ```

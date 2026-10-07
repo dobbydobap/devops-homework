@@ -26,6 +26,9 @@ system, I ran them inside containers rather than faking anything:
 | [kubernetes-core-objects/](kubernetes-core-objects/) | Session 10 - pods, replicasets, deployments, pod lifecycle, rollout strategies |
 | [kubernetes-services/](kubernetes-services/) | Session 11 - ClusterIP, NodePort, LoadBalancer, ExternalName, headless |
 | [kubernetes-config-ingress/](kubernetes-config-ingress/) | Session 12 - ConfigMaps, Secrets, Ingress routing |
+| [kubernetes-storage-hpa/](kubernetes-storage-hpa/) | Session 13 - volumes, HPA autoscaling under load, probes mini project |
+| [kubernetes-troubleshooting/](kubernetes-troubleshooting/) | Session 14 - CrashLoopBackOff, ImagePullBackOff, Pending: investigate and fix |
+| [helm/](helm/) | Session 15 - Helm commands, upgrade and rollback workflow, Notes chart mini project |
 
 Docker "Hello World" apps, one folder each:
 
