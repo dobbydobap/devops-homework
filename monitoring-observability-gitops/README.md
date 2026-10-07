@@ -115,9 +115,50 @@ Developer --commit--> Git repo --watched by--> Argo CD (in cluster) --applies-->
 Push-based CD (my session 16/17 pipelines running `kubectl apply`) needs cluster credentials stored
 in CI. Pull-based GitOps keeps those credentials inside the cluster.
 
-### Status of the GitOps demo
+### GitOps demo with Argo CD
 
-Argo CD is installed on my Minikube cluster (all 7 components running in the `argocd` namespace).
-**The sync demo itself is not finished yet**: the Application pointing at a folder in this repo,
-then a commit showing Argo CD applying it automatically. That needs the manifests pushed to GitHub
-first, because Argo CD pulls from Git. I'm adding it next.
+Argo CD runs on my Minikube cluster. The manifests it deploys live in **this repository**, in
+[gitops/app/](gitops/app/) — a namespace, a 2-replica nginx Deployment and a Service. The
+[Application](gitops/argocd-application.yaml) tells Argo CD to watch that path on `main`:
+
+```yaml
+source:
+  repoURL: https://github.com/dobbydobap/devops-homework.git
+  targetRevision: main
+  path: monitoring-observability-gitops/gitops/app
+syncPolicy:
+  automated:
+    prune: true      # delete what's removed from Git
+    selfHeal: true   # undo manual changes
+```
+
+I applied only that one Application with `kubectl`. I never applied the app manifests myself —
+Argo CD pulled them from GitHub:
+
+```
+t+30s  OutOfSync/Missing      Argo CD has read Git; nothing exists in the cluster yet
+t+35s  Synced/Progressing     it applied the manifests; pods starting
+t+55s  Synced/Healthy         both pods ready
+```
+
+![argo cd synced](screenshots/05-argocd-synced.png)
+
+The Application shows the repo, the path, and the exact Git **commit it deployed**: revision
+`93aaa37`, which is my "Session 20" commit in this repo. The application is `Synced` and `Healthy`,
+and each resource it manages (the Namespace, Service and Deployment) is `Synced`.
+
+### Continuous reconciliation (self-heal)
+
+To prove Git really is the source of truth, I changed the cluster by hand behind Argo CD's back:
+
+![argo cd self-heal](screenshots/06-argocd-selfheal.png)
+
+1. `kubectl scale --replicas=5` — the Deployment went to `2/5`
+2. **within 3 seconds** Argo CD noticed the drift from Git and set it back to 2 replicas
+3. the Deployment returned to `2/2`
+
+The final line caught Argo CD mid-refresh (`OutOfSync / Progressing`). Ten seconds later it read
+`Synced / Healthy` with 2/2 replicas. This is the core GitOps property: a manual `kubectl` change
+doesn't stick, because the cluster always converges back to what's in Git. To actually change the
+replica count, you change it in [deployment.yaml](gitops/app/deployment.yaml) and push — Argo CD
+polls the repo every 3 minutes and applies it.

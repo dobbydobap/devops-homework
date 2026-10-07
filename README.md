@@ -29,6 +29,10 @@ system, I ran them inside containers rather than faking anything:
 | [kubernetes-storage-hpa/](kubernetes-storage-hpa/) | Session 13 - volumes, HPA autoscaling under load, probes mini project |
 | [kubernetes-troubleshooting/](kubernetes-troubleshooting/) | Session 14 - CrashLoopBackOff, ImagePullBackOff, Pending: investigate and fix |
 | [helm/](helm/) | Session 15 - Helm commands, upgrade and rollback workflow, Notes chart mini project |
+| [terraform-s3-demo/](terraform-s3-demo/) | Session 18 - Terraform S3 bucket: init, plan, apply, show, output, destroy |
+| [aws-services/](aws-services/) | Session 18 - notes on IAM, EC2, S3, VPC, DynamoDB and RDS |
+| [terraform-cloud-infra/](terraform-cloud-infra/) | Session 19 - Terraform VPC, subnet, IGW, security group, EC2 and S3 |
+| [monitoring-observability-gitops/](monitoring-observability-gitops/) | Session 20 - Prometheus and Grafana with alerts, observability, GitOps |
 
 Docker "Hello World" apps, one folder each:
 
