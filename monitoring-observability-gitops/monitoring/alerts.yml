@@ -1,0 +1,29 @@
+groups:
+  - name: taskboard
+    rules:
+      - alert: TaskBoardDown
+        expr: up{job="taskboard-backend"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "TaskBoard backend is down"
+          description: "Prometheus has not been able to scrape {{ $labels.instance }} for 15 seconds."
+
+      - alert: TaskBoardHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="taskboard-backend",status="5xx"}[1m]))
+            / clamp_min(sum(rate(http_requests_total{job="taskboard-backend"}[1m])), 0.001) > 0.05
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 5% of TaskBoard requests are failing"
+
+      - alert: TaskBoardHighMemory
+        expr: process_resident_memory_bytes{job="taskboard-backend"} > 300 * 1024 * 1024
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "TaskBoard backend is using more than 300MB of memory"

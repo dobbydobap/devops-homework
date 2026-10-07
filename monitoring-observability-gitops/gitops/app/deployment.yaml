@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: session20-mini
+  namespace: session20
+  labels:
+    app: session20-mini
+spec:
+  # change this number in Git and push: Argo CD will scale the cluster to match
+  replicas: 2
+  selector:
+    matchLabels:
+      app: session20-mini
+  template:
+    metadata:
+      labels:
+        app: session20-mini
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.30-alpine
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
